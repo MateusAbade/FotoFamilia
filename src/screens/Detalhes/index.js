@@ -65,26 +65,27 @@ export default class Detalhes extends React.Component {
     }
 
     mostrarSlide = () => {
-        var slides = [];
+        var slidesRecebe = [slide1, slide2, slide3,slide4, slide5, slide6, slide7, slide8, slide9,
+            slide10, slide11, slide12, slide13, slide14, slide15,
+            slide16, slide17, slide18, slide19, slide20, slide21];
+        const slides = [];    
         const { feedId } = this.state;
 
-
-        console.log(feedId)
-        if (feedId == 1) {
-            slides = [slide1, slide2, slide3];
-        } if (feedId == 2) {
-            slides = [slide4, slide5, slide6];
-        } if (feedId == 3) {
-            slides = [slide7, slide8, slide9];
-        } if (feedId == 4) {
-            slides = [slide10, slide11, slide12];
-        } if (feedId == 5) {
-            slides = [slide13, slide14, slide15];
-        } if (feedId == 6) {
-            slides = [slide16, slide17, slide18];
-        } if (feedId == 7) {
-            slides = [slide19, slide20, slide21];
+        var cont=1;
+        for (let i = 0; i < slidesRecebe.length; i++)  {
+             cont=cont+i;
+           if (feedId== cont){
+              var recebe = cont * 3;
+              recebe = recebe-3;
+             for (let i = 0; i < 3; i++) {
+                 slides[i]=slidesRecebe[recebe]
+                 recebe++;
+             }
+             break;
+           }
+           cont=1;
         }
+        
 
 
         return (
