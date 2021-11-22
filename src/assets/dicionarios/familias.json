@@ -1,0 +1,45 @@
+{
+    "familias": [
+        {
+            "_id": 1, 
+            "name": "Abade"
+            
+        },
+        {
+            "_id": 2, 
+            "name": "Oliveira"
+            
+        },
+        {
+            "_id": 3, 
+            "name": "Pereira"
+            
+        },
+        {
+            "_id": 4, 
+            "name": "Moitinho"
+            
+        },
+        {
+            "_id": 5, 
+            "name": "Soares"
+            
+        },
+        {
+            "_id": 6, 
+            "name": "Barros"
+            
+        },
+        {
+            "_id": 7, 
+            "name": "Araújo"
+            
+        },
+        {
+            "_id": 8, 
+            "name": "Lima"
+            
+        }
+          
+    ]
+}

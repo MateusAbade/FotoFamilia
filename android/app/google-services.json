@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "154889815756",
+    "project_id": "fotofamilia-1ff4b",
+    "storage_bucket": "fotofamilia-1ff4b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:154889815756:android:fb3b95b0fcef3ced802469",
+        "android_client_info": {
+          "package_name": "com.fotofamilia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "154889815756-40levrneisc30tr5ohts5no4k4uqj98l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fotofamilia",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "154889815756-tesbnk75rg9h2d5gphqaspf2ibddpg6l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQMtCrFjKCt3TXdrGmt3LXLlb074INPeU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "154889815756-h15v4bjgk82jq4ehd7kej0jvhhaillub.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
