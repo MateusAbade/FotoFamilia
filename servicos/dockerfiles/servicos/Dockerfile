@@ -92,6 +92,6 @@ RUN mkdir /servico
 WORKDIR /servico
 
 # lets avoid using the root directory to run the app
-RUN adduser --disabled-password --force-badname --shell /bin/bash --gecos "User" ri6qbuRYvtXfHM9L 
+RUN adduser --disabled-password --force-badname --shell /bin/bash --gecos "User" ri6qbuRYvtXfHM9L
 RUN rm -rf /home/ri6qbuRYvtXfHM9L
 USER ri6qbuRYvtXfHM9L

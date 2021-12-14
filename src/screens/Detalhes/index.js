@@ -1,41 +1,19 @@
 import React from "react";
 import { SliderBox } from "react-native-image-slider-box";
 import CardView from "react-native-cardview";
-import feedsEstaticos from "../../assets/dicionarios/feeds.json"
 import {
     NomeFamilia, DescricaoFamilia, Likes, Espacador,
     EspacoEsquerda, Cabecalho, LinhaTop, EspacoDireita,
     MenuNomeFamilia, EsquerdaDaMesmaLinha, Titulo, CaixaDetalhes, MenuTop
 } from "../../assets/styles.js";
-import slide1 from "../../assets/img/Homero-Leonor/slide1.jpg";
-import slide2 from "../../assets/img/Homero-Leonor/slide2.jpg";
-import slide3 from "../../assets/img/Homero-Leonor/slide3.jpg";
-import slide4 from "../../assets/img/Emanuel-Irani/slide1.jpg";
-import slide5 from "../../assets/img/Emanuel-Irani/slide2.jpg";
-import slide6 from "../../assets/img/Emanuel-Irani/slide3.jpg";
-import slide7 from "../../assets/img/Maria-Edgar/slide1.jpg";
-import slide8 from "../../assets/img/Maria-Edgar/slide2.jpg";
-import slide9 from "../../assets/img/Maria-Edgar/slide3.jpg";
-import slide10 from "../../assets/img/Elzir-Moises/slide1.jpg";
-import slide11 from "../../assets/img/Elzir-Moises/slide2.jpg";
-import slide12 from "../../assets/img/Elzir-Moises/slide3.jpg";
-import slide13 from "../../assets/img/Virigilio-Iraildes/slide1.jpg";
-import slide14 from "../../assets/img/Virigilio-Iraildes/slide2.jpg";
-import slide15 from "../../assets/img/Virigilio-Iraildes/slide3.jpg";
-import slide16 from "../../assets/img/Clemencia-Alvino/slide1.jpg";
-import slide17 from "../../assets/img/Clemencia-Alvino/slide2.jpg";
-import slide18 from "../../assets/img/Clemencia-Alvino/slide3.jpg";
-import slide19 from "../../assets/img/Raquel-Claudenir/slide1.jpg";
-import slide20 from "../../assets/img/Raquel-Claudenir/slide2.jpg";
-import slide21 from "../../assets/img/Raquel-Claudenir/slide3.jpg";
-
-
 import { Header } from "react-native-elements";
 import Icon from "react-native-vector-icons/AntDesign";
 import Compartilhador from "../../components/compartilhador";
 import syncStorage from "sync-storage";
 import Toast from "react-native-simple-toast";
+import { getFeed, getImagem, usuarioGostou, gostar, desgostar, likesAlive, comentariosAlive } from "../../api";
 
+const TAMANHO_SLIDE = 3;
 export default class Detalhes extends React.Component {
 
     constructor(props) {
@@ -44,49 +22,80 @@ export default class Detalhes extends React.Component {
         this.state = {
             feedId: this.props.navigation.state.params.feedId,
             feed: null,
-            gostou: false
+            gostou: false,
+            podeGostar: false,
+            podeComentar: false
         }
+
+    }
+    verificarUsuarioGostou = () => {
+        const { feedId } = this.state;
+
+        usuarioGostou(feedId).then((resultado) => {
+            this.setState({
+                gostou: resultado.likes > 0
+            });
+        }).catch((erro) => {
+            console.log("erro verificando se usuário gostou: " + erro);
+        })
 
     }
     carregarFeed = () => {
         const { feedId } = this.state;
-        const feeds = feedsEstaticos.feeds;
-        const feedsFiltrados = feeds.filter((feed) => feed._id === feedId);
-
-        if (feedsFiltrados.length) {
+        getFeed(feedId).then((feedAtualizado) => {
             this.setState({
-                feed: feedsFiltrados[0]
+                feed: feedAtualizado
+            }, () => {
+                this.verificarUsuarioGostou();
             });
-        }
+        }).catch((erro) => {
+            console.error("erro atualizando o feed: " + erro);
+        })
 
     }
     componentDidMount = () => {
+        likesAlive().then((resultado) => {
+            if (resultado.alive === "yes") {
+                this.setState({
+                    podeGostar: true
+                });
+            } else {
+                this.setState({
+                    podeGostar: false
+                }, () => {
+                    Toast.show("Não será possível registrar likes agora, tente mais tarde!", Toast.LONG)
+                });
+            }
+        }).catch((erro) => {
+            console.error("erro verificando disponibilidade de serviço: " + erro);
+        });
+        comentariosAlive().then((resultado) => {
+            if (resultado.alive === "yes") {
+                this.setState({
+                    podeComentar: true
+                });
+            } else {
+                this.setState({
+                    podeComentar: false
+                }, () => {
+                    Toast.show("Não será possível comentar agora, tente mais tarde!", Toast.LONG)
+                });
+            }
+        }).catch((erro) => {
+            console.error("erro verificando disponibilidade de serviço: " + erro);
+        });
         this.carregarFeed();
     }
 
     mostrarSlide = () => {
-        var slidesRecebe = [slide1, slide2, slide3,slide4, slide5, slide6, slide7, slide8, slide9,
-            slide10, slide11, slide12, slide13, slide14, slide15,
-            slide16, slide17, slide18, slide19, slide20, slide21];
-        const slides = [];    
-        const { feedId } = this.state;
+        const { feed } = this.state;
+        let slides = [];
+        for (let i = 0; i < TAMANHO_SLIDE; i++) {
+            if (feed.familia.blobs[i].file) {
+                slides = [...slides, getImagem(feed.familia.blobs[i].file)]
+            }
 
-        var cont=1;
-        for (let i = 0; i < slidesRecebe.length; i++)  {
-             cont=cont+i;
-           if (feedId== cont){
-              var recebe = cont * 3;
-              recebe = recebe-3;
-             for (let i = 0; i < 3; i++) {
-                 slides[i]=slidesRecebe[recebe]
-                 recebe++;
-             }
-             break;
-           }
-           cont=1;
         }
-        
-
 
         return (
 
@@ -110,32 +119,37 @@ export default class Detalhes extends React.Component {
     }
 
     likes = () => {
-        const { feed } = this.state;
-        const ususario = syncStorage.get("user");
-        feed.likes++;
+        const { feedId } = this.state;
+        gostar(feedId).then((resultado) => {
+            if (resultado.situacao === "ok") {
+                this.carregarFeed();
+                Toast.show("Obrigado pela sua avaliação!", Toast.LONG);
+            } else {
+                Toast.show("Ocorreu um erro nessa operação. Tente novamente depois!", Toast.LONG);
+            }
+        }).catch((erro) => {
+            console.erro("erro registrando like: " + erro);
+        })
 
-        this.setState({
-            feed: feed,
-            gostou: true
-        }, () => {
-            Toast.show("Obrigado pela sua avaliação!", Toast.LONG);
-        });
+
     }
 
     dislikes = () => {
-        const { feed } = this.state;
-        const ususario = syncStorage.get("user");
-        feed.likes--;
+        const { feedId } = this.state;
+        desgostar(feedId).then((resultado) => {
+            if (resultado.situacao === "ok") {
+                this.carregarFeed();
 
-        this.setState({
-            feed: feed,
-            gostou: false
-
-        });
+            } else {
+                Toast.show("Ocorreu um erro nessa operação. Tente novamente depois!", Toast.LONG);
+            }
+        }).catch((erro) => {
+            console.erro("erro registrando like: " + erro);
+        })
     }
 
     render = () => {
-        const { feed, gostou } = this.state;
+        const { feed, gostou, podeGostar, podeComentar } = this.state;
         const usuario = syncStorage.get("user")
 
         if (feed) {
@@ -151,7 +165,7 @@ export default class Detalhes extends React.Component {
                         }
                         centerComponent={
                             <MenuNomeFamilia>
-                                {feed.assinatura.name}
+                                {feed.assinatura}
                             </MenuNomeFamilia>
                         }
                         rightComponent={
@@ -161,14 +175,14 @@ export default class Detalhes extends React.Component {
                                 </EspacoDireita>
                                 <EspacoDireita>
 
-                                    {gostou && usuario && <Icon name="heart" size={28} color={"#fff"}
+                                    {podeGostar && gostou && usuario && <Icon name="heart" size={28} color={"#fff"}
                                         onPress={
                                             () => {
                                                 this.dislikes();
                                             }
                                         }
                                     ></Icon>}
-                                    {!gostou && usuario && <Icon name="hearto" size={28} color={"#fff"}
+                                    {podeGostar && !gostou && usuario && <Icon name="hearto" size={28} color={"#fff"}
                                         onPress={
                                             () => {
                                                 this.likes();
@@ -189,7 +203,7 @@ export default class Detalhes extends React.Component {
                         {this.mostrarSlide()}
                         <CaixaDetalhes>
                             <NomeFamilia><Titulo>Familia: </Titulo>{feed.familia.name}</NomeFamilia>
-                            <NomeFamilia><Titulo>Descendência: </Titulo>{feed.assinatura.name}</NomeFamilia>
+                            <NomeFamilia><Titulo>Descendência: </Titulo>{feed.assinatura}</NomeFamilia>
                             <DescricaoFamilia>{feed.familia.description}</DescricaoFamilia>
                             <Espacador />
                         </CaixaDetalhes>
@@ -203,7 +217,7 @@ export default class Detalhes extends React.Component {
 
                             </EspacoEsquerda>
                             <EspacoEsquerda />
-                            {usuario && <Icon name="message1" size={18} onPress={
+                            {podeComentar && usuario && <Icon name="message1" size={18} onPress={
                                 () => {
                                     this.props.navigation.navigate("Comentarios",
                                         {

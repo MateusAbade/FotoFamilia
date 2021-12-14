@@ -1,10 +1,10 @@
 import React from "react";
 import { ScrollView, TouchableOpacity } from "react-native";
-import FamiliasEstaticas from "../../assets/dicionarios/familias.json";
 import { NomeFamilia, ContenedorMenu, DivisorMenu, Espacador, Titulo, EspacoEsquerda } from "../../assets/styles"
 import { SafeAreaInsetsContext } from "react-native-safe-area-context";
 import { LoginOptionsMenu } from "../Login";
 import Toast from "react-native-simple-toast";
+import { getDescendencia } from "../../api";
 
 export default class Menu extends React.Component {
     constructor(props) {
@@ -12,21 +12,32 @@ export default class Menu extends React.Component {
 
         this.state = {
             filtrar: props.filtragem,
-            atualizar: true
+            atualizar: true,
+            descendencia: []
         }
     }
+    componentDidMount = () => {
+        getDescendencia().then((maisDescendencia) => {
+            console.log("adicionando " + maisDescendencia + " descendencia")
+            this.setState({
+                descendencia: maisDescendencia
+            });
+        }).catch((erro) => {
+            console.error("ocorreu um erro criando um menu de descendencia: " + erro);
+        })
+    }
 
-    mostrarFamilias = (familia) => {
+    mostrarFamilias = (descendencia) => {
         const { filtrar } = this.state;
 
         return (
             <TouchableOpacity onPress={() => {
-                filtrar(familia)
+                filtrar(descendencia)
             }}>
                 <DivisorMenu />
                 <EspacoEsquerda>
                     <NomeFamilia>
-                        <Titulo>Familia: </Titulo>{familia.name}
+                        <Titulo>Familia: </Titulo>{descendencia.assinaturas}
                     </NomeFamilia>
                 </EspacoEsquerda>
                 <Espacador></Espacador>
@@ -52,7 +63,7 @@ export default class Menu extends React.Component {
         })
     }
     render = () => {
-        const familias = FamiliasEstaticas.familias;
+        const { descendencia } = this.state;
 
         return (
             <SafeAreaInsetsContext.Consumer>
@@ -60,7 +71,7 @@ export default class Menu extends React.Component {
                     <ScrollView style={{ paddingTop: insets.top }}>
                         <LoginOptionsMenu onLogin={this.onLogin} onLogout={this.onLogout} />
                         <ContenedorMenu>
-                            {familias.map((familia) => this.mostrarFamilias(familia))}
+                            {descendencia.map((des) => this.mostrarFamilias(des))}
                         </ContenedorMenu>
                     </ScrollView>
                 }

@@ -147,9 +147,21 @@ export const DataComentario = styled.Text`
 export const button= {
       backgroundColor: '#FF4500',
       width: 100,
-      borderRadius: 15       
+      borderRadius: 15
    }
+   export const buttonFalha= {
+    backgroundColor: '#FF4500'
+ }
 
    export const buttonGoogle= {
-    backgroundColor: '#db4a39',     
+    backgroundColor: '#db4a39'
  }
+ export const ContededorMensagem = styled.View`
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    background-color: #eff2f1;
+`;
+export const Mensagem = styled.Text`
+    color: #283044;
+`;

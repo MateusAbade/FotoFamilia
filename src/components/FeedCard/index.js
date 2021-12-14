@@ -1,9 +1,9 @@
 import React from "react";
-import { TouchableOpacity, Image } from "react-native";
-import { Card, CardImage, CardContent } from "react-native-cards";
+import { TouchableOpacity } from "react-native";
+import { Card, CardImage, CardContent } from "react-native-material-cards";
 import { NomeFamilia, DescricaoFamilia, EsquerdaDaMesmaLinha, Likes, Titulo } from "../../assets/styles.js";
 import Icon from "react-native-vector-icons/AntDesign";
-import familia from "../../assets/img/familia.jpg"
+import { getImagem } from "../../api/index.js";
 export default class FeedCard extends React.Component {
     constructor(props) {
         super(props);
@@ -23,10 +23,10 @@ export default class FeedCard extends React.Component {
                 }
             }>
                 <Card>
-                    <CardImage source={familia} />
+                    <CardImage source={getImagem(feed.familia.blobs[0].file)} />
                     <CardContent>
                         <NomeFamilia><Titulo>Familia: </Titulo>{feed.familia.name}</NomeFamilia>
-                        <NomeFamilia><Titulo>Descendência: </Titulo>{feed.assinatura.name}</NomeFamilia>
+                        <NomeFamilia><Titulo>Descendência: </Titulo>{feed.descendencia.assinatura}</NomeFamilia>
                     </CardContent>
                     <CardContent>
                         <DescricaoFamilia>{feed.familia.description}</DescricaoFamilia>
