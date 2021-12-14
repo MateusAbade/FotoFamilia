@@ -6,22 +6,20 @@ import Swipeable from "react-native-swipeable-row";
 import SyncStorage from 'sync-storage';
 import Moment from 'react-moment';
 import "moment-timezone"
-import { MenuNomeFamilia,Cabecalho, EspacoDireita,
-AutorComentario, ContededorComentarios, ContededorComentarioDeOutroUsuario,
-ContededorComentarioDoUsuario, ContededorNovoComentario, Comentario,
-DataComentario, EspacadorComentario, LinhaTop, Espacador, 
-DivisorComentario, EspacoBottom, EspacoEsquerda, button } from '../../assets/styles';
-import comentariosEstaticos from "../../assets/dicionarios/comentarios.json";
+import {
+    MenuNomeFamilia, Cabecalho, EspacoDireita,
+    AutorComentario, ContededorComentarios, ContededorComentarioDeOutroUsuario,
+    ContededorComentarioDoUsuario, ContededorNovoComentario, Comentario,
+    DataComentario, EspacadorComentario, LinhaTop, Espacador,
+    DivisorComentario, EspacoBottom, EspacoEsquerda, button, ContededorMensagem, Mensagem, buttonFalha
+} from '../../assets/styles';
 import { View } from 'react-native';
+import { getComentarios, adicionarComentario, removerComentario, comentariosAlive } from "../../api"
+import Toast from "react-native-simple-toast";
 
-
-
-
-
-const COMENTARIOS_POR_PAGINA = 5;
 const TAMANHO_MAXIMO_COMENTARIO = 100;
 export default class Comentarios extends React.Component {
-    
+
 
     constructor(props) {
         super(props);
@@ -32,101 +30,116 @@ export default class Comentarios extends React.Component {
             comentarios: [],
             atualizando: false,
             carregando: false,
-            proximaPagina: 0,
+            proximaPagina: 1,
             telaAdicaoVisivel: false,
-            textoNovoComentario: ""
+            textoNovoComentario: "",
+            podeComentar: true
         }
     }
 
     carregarComentarios = () => {
-        const { feedId, comentarios, proximaPagina} = this.state;
-       
+        const { feedId, comentarios, proximaPagina } = this.state;
+
         this.setState({
             carregando: true
         });
+        comentariosAlive().then((resultado) => {
+            if (resultado.alive === "yes") {
+                this.setState({
+                    podeComentar: true
+                }, () => {
+                    getComentarios(feedId, proximaPagina).then((maisComentarios) => {
+                        if (maisComentarios.length) {
+                            this.setState({
+                                proximaPagina: proximaPagina + 1,
+                                comentarios: [...comentarios, ...maisComentarios],
+                                atualizando: false,
+                                carregando: false
+                            })
+                        } else {
+                            this.setState({
+                                atualizando: false,
+                                carregando: false
+                            })
+                        }
+                    }).catch((erro) => {
+                        console.error("erro exibindo comentarios: " + erro);
+                    })
+                });
+            } else {
+                this.setState({
+                    podeComentar: false
+                });
+            }
+        }).catch((erro) => {
+            console.error("erro, verificando a diponibilidade do serviço: " + erro);
+        })
 
 
-        const idInicial = proximaPagina * COMENTARIOS_POR_PAGINA + 1;
-        const idFinal = idInicial  + COMENTARIOS_POR_PAGINA - 1;
-        
-        const maisComentarios = comentariosEstaticos.comentarios.filter((comentario)=>
-        comentario._id >= idInicial && comentario._id <= idFinal && comentario.feed === feedId);
-
-        if(maisComentarios.length){
-            this.setState({
-                proximaPagina: proximaPagina + 1,
-                comentarios:[...comentarios, ...maisComentarios],
-                atualizando: false,
-                carregando: false
-            })
-        }else{
-            this.setState({
-                atualizando: false,
-                carregando: false
-            })
-        }
-  
     }
 
     componentDidMount = () => {
         this.carregarComentarios();
-       
+
     }
 
     carregarMaisComentarios = () => {
-       const {carregando }= this.state;
-        
-       if(carregando){
-           return;
-       }
-       
-       this.carregarComentarios();
+        const { carregando } = this.state;
+        if (carregando) {
+            return;
+        }
+
+        this.carregarComentarios();
     }
 
-   
+
     mostrarComentarioDoUsuario = (comentario) => {
         return (
-            <>  
+            <>
                 <Swipeable
-                   rightButtonWidth={50}
-                   rightButtons={[
-                        <View style={{ marginTop:35, marginLeft: 10 }}>
+                    rightButtonWidth={50}
+                    rightButtons={[
+                        <View style={{ marginTop: 35, marginLeft: 10 }}>
                             <Icon name="delete" color="#FF4500" size={28}
                                 onPress={() => {
                                     this.confirmarRemocao(comentario);
-                                }}/>
+                                }} />
                         </View>
-                        ]
+                    ]
                     }>
-                
-                <ContededorComentarioDoUsuario>
-                    <EspacoEsquerda>
-                    <AutorComentario>{"você: "}</AutorComentario>
-                    <Comentario>{comentario.content}</Comentario>
-                    <DataComentario>
-                        <Moment element={Text} parse = "YYYY-MM-DD HH:mm"
-                        format="DD/MM/YYYY HH:mm">
-                            {comentario.datetime}
-                        </Moment>
-                    </DataComentario>
-                    </EspacoEsquerda>
-                </ContededorComentarioDoUsuario>
+
+                    <ContededorComentarioDoUsuario>
+                        <EspacoEsquerda>
+                            <AutorComentario>{"você: "}</AutorComentario>
+                            <Comentario>{comentario.content}</Comentario>
+                            <DataComentario>
+                                <Moment element={Text} parse="YYYY-MM-DD HH:mm"
+                                    format="DD/MM/YYYY HH:mm">
+                                    {comentario.datetime}
+                                </Moment>
+                            </DataComentario>
+                        </EspacoEsquerda>
+                    </ContededorComentarioDoUsuario>
                 </Swipeable>
-                <EspacadorComentario/>
+                <EspacadorComentario />
             </>
         );
     }
-    removerComentario = (comentariosR) => {
-        const { comentarios } = this.state;
+    removerComentario = (comentarioParaRemover) => {
+        removerComentario(comentarioParaRemover._id).then(
+            (resultado) => {
+                if (resultado.situacao === "ok") {
+                    this.setState({
+                        proximaPagina: 1,
+                        comentarios: []
+                    }, () => {
+                        this.carregarComentarios();
+                    });
+                }
+            }
+        ).catch((erro) => {
+            console.error("erro removendo comentario: " + erro);
 
-        const comentariosFiltrados = comentarios.filter((comentario) => {
-            comentario._id !== comentariosR._id
-        });
-
-        this.setState({
-            comentarios: comentariosFiltrados
-        }, () => {
-            this.atualizar()
         });
     }
 
@@ -136,117 +149,129 @@ export default class Comentarios extends React.Component {
             "Deseja remover o seu comentário?",
             [
                 { text: "NÃO", style: 'cancel' },
-                { text: "SIM", onPress: () => this.removerComentario(comentario)}
+                { text: "SIM", onPress: () => this.removerComentario(comentario) }
             ]
         )
     }
 
     mostrarComentarioDeOutroUsuario = (comentario) => {
-        
-        return(
+
+        return (
             <>
                 <ContededorComentarioDeOutroUsuario>
                     <AutorComentario>{comentario.user.name}</AutorComentario>
                     <Comentario>{comentario.content}</Comentario>
                     <DataComentario>
-                        <Moment element={Text} parse = "YYYY-MM-DD HH:mm"
-                        format="DD/MM/YYYY HH:mm">
+                        <Moment element={Text} parse="YYYY-MM-DD HH:mm"
+                            format="DD/MM/YYYY HH:mm">
                             {comentario.datetime}
                         </Moment>
                     </DataComentario>
                 </ContededorComentarioDeOutroUsuario>
-            <EspacadorComentario/>
+                <EspacadorComentario />
             </>
         );
     }
 
     atualizar = () => {
-        this.setState({ atualizando: true, carregando: false, proximaPagina: 0,
-            comentarios: [] }, () => {
-                this.carregarComentarios();
-            });
-    }
-    adicionarComentario = () =>{
-        const { feedId, comentarios, textoNovoComentario} = this.state;
-        const usuario = SyncStorage.get("user");
-        const comentario = [
-            {
-                "_id": comentarios.length + 100,
-                "feed": feedId,
-                "user": {
-                    "userId":2,
-                    "email": usuario.email,
-                    "name": usuario.name
-                },
-                "datetime": "2021-11-20T17:47-0500",
-                "content": textoNovoComentario
-            }
-        ];
-
         this.setState({
-            comentarios: [...comentario, ...comentarios]
+            atualizando: true, carregando: false, proximaPagina: 1,
+            comentarios: []
+        }, () => {
+            this.carregarComentarios();
         });
-        this.mudarVisibilidadeTelaAcao();
-    }   
+    }
+    adicionarComentario = () => {
+        const { feedId, textoNovoComentario } = this.state;
 
-    atualizarTextoNovoComentario = (texto) =>{
+        comentariosAlive().then((resultado) => {
+            if (resultado.alive === "yes") {
+                this.setState({
+                    podeComentar: true
+                }, () => {
+                    adicionarComentario(feedId, textoNovoComentario).then(
+                        (resultado) => {
+                            if (resultado.situacao == "ok") {
+                                this.setState({
+                                    proximaPagina: 1,
+                                    comentarios: []
+                                }, () => {
+                                    this.carregarComentarios();
+                                })
+                            }
+                        }
+                    ).catch((erro) => {
+                        console.error("erro adicionando comentario: " + erro);
+                    });
+                });
+            } else {
+                this.setState({
+                    podeComentar: false
+                });
+            }
+        }).catch((erro) => {
+            console.error("erro, verificando a diponibilidade do serviço: " + erro);
+        })
+
+        this.mudarVisibilidadeTelaAcao();
+    }
+
+    atualizarTextoNovoComentario = (texto) => {
         this.setState({
             textoNovoComentario: texto
         });
     }
-                               
 
-    mudarVisibilidadeTelaAcao = () =>{
-        const {telaAdicaoVisivel} = this.state;
+
+    mudarVisibilidadeTelaAcao = () => {
+        const { telaAdicaoVisivel } = this.state;
 
         this.setState({
-            telaAdicaoVisivel : ! telaAdicaoVisivel
+            telaAdicaoVisivel: !telaAdicaoVisivel
         })
     }
 
-    mostrarTelaAdicaoComentario = ()=>{
-        return(
+    mostrarTelaAdicaoComentario = () => {
+        return (
             <Modal animationType="slide"
                 transparent={true}
 
                 onRequestClose={
-                    () =>{
+                    () => {
                         this.atualizar();
                     }
                 }
             >
                 <ContededorNovoComentario>
                     <TextInput multiline
-                               editable
-                               placeholder={"Digite um comentário"}
-                               maxLength={TAMANHO_MAXIMO_COMENTARIO}
-                               onChangeText={(texto) => {
-                                   this.atualizarTextoNovoComentario(texto);
-                               }}
+                        editable
+                        placeholder={"Digite um comentário"}
+                        maxLength={TAMANHO_MAXIMO_COMENTARIO}
+                        onChangeText={(texto) => {
+                            this.atualizarTextoNovoComentario(texto);
+                        }}
                     />
-                    <DivisorComentario/>    
-                    
+                    <DivisorComentario />
                     <LinhaTop>
-                        
-                            <Button 
-                                buttonStyle={button}
-                                icon={
-                                    <Icon
-                                        name={"check"}
-                                        size={22}
-                                        color="#fff"/>
-                                }
-                                title="Gravar"
-                                type="solid"
+                        <Button
+                            buttonStyle={button}
+                            icon={
+                                <Icon
+                                    name={"check"}
+                                    size={22}
+                                    color="#fff" />
+                            }
+                            title="Gravar"
+                            type="solid"
 
-                                onPress={
-                                    () => {
-                                        this.adicionarComentario();
-                                    }
+                            onPress={
+                                () => {
+                                    this.adicionarComentario();
                                 }
-                            />
-                            <Espacador/>
-                            <Button
+                            }
+                        />
+                        <Espacador />
+                        <Button
                             buttonStyle={button}
                             icon={
                                 <Icon
@@ -262,30 +287,30 @@ export default class Comentarios extends React.Component {
                                 () => {
                                     this.mudarVisibilidadeTelaAcao();
                                 }
-                            } 
-                            
-                            />
-                           
-                        
+                            }
+
+                        />
+
+
                     </LinhaTop>
-                    <EspacoBottom/>
+                    <EspacoBottom />
                 </ContededorNovoComentario>
             </Modal>
         );
     }
-    
+
 
     mostrarComentarios = () => {
         const { familia, comentarios, atualizando } = this.state;
         const usuario = SyncStorage.get("user");
 
-        return(
+        return (
             <>
-                <Header 
+                <Header
                     leftComponent={
-                        <Icon name="left" color ="white" size={28} onPress={() => {
-                                this.props.navigation.goBack()
-                            }
+                        <Icon name="left" color="white" size={28} onPress={() => {
+                            this.props.navigation.goBack()
+                        }
                         } />
                     }
 
@@ -297,58 +322,92 @@ export default class Comentarios extends React.Component {
 
                     rightComponent={
                         <EspacoDireita>
-                        <Icon name="pluscircleo" size={28} color ="white" onPress={
-                            () => {
-                                this.mudarVisibilidadeTelaAcao();
-                            }
-                        } />
+                            <Icon name="pluscircleo" size={28} color="white" onPress={
+                                () => {
+                                    this.mudarVisibilidadeTelaAcao();
+                                }
+                            } />
                         </EspacoDireita>
                     }
 
                     containerStyle={Cabecalho}
                 />
-                    <ContededorComentarios>
-                        <FlatList
-                            data = {comentarios}
+                <ContededorComentarios>
+                    <FlatList
+                        data={comentarios}
 
-                            onEndReached = { () => {this.carregarMaisComentarios();} }
-                            onEndReachedThreshold = { 0.1 }
+                        onEndReached={() => { this.carregarMaisComentarios(); }}
+                        onEndReachedThreshold={0.1}
 
-                            onRefresh = { () => {this.atualizar();} }
-                            refreshing = { atualizando }
+                        onRefresh={() => { this.atualizar(); }}
+                        refreshing={atualizando}
 
-                            keyExtractor = { (item) => String(item._id) }
-                            renderItem = { ({item}) => {
-                                    if (item.user.email == usuario.email) {
-                                        return this.mostrarComentarioDoUsuario(item)
-                                    } else {
-                                        return this.mostrarComentarioDeOutroUsuario(item)
-                                    }
-                                }
+                        keyExtractor={(item) => String(item._id)}
+                        renderItem={({ item }) => {
+                            if (item.user.email == usuario.email) {
+                                return this.mostrarComentarioDoUsuario(item)
+                            } else {
+                                return this.mostrarComentarioDeOutroUsuario(item)
                             }
-                        />
-                    </ContededorComentarios>
-                
+                        }
+                        }
+                    />
+                </ContededorComentarios>
+
             </>
         )
     }
-
+    mostrarMensagemCarregando = () => {
+        return (
+            <ContededorMensagem>
+                <Mensagem>Carregando feeds, aguarde!</Mensagem>
+            </ContededorMensagem>
+        );
+    }
+    mostrarBotaoAtualizar = () => {
+        return (
+            <ContededorMensagem>
+                <Mensagem>Um dos nossos serviços não está funcionando :(</Mensagem>
+                <Mensagem>Tente novamente mais tarde!</Mensagem>
+                <Espacador />
+                <Button
+                    buttonStyle={buttonFalha}
+                    icon={
+                        <Icon
+                            name="reload1"
+                            size={22}
+                            color="#fff"
+                        />
+                    }
+                    title="Atualizar"
+                    type="solid"
+                    onPress={() => {
+                        this.carregarComentarios();
+                    }}
+                />
+            </ContededorMensagem>
+        )
+    }
     render = () => {
-        const { comentarios, telaAdicaoVisivel } = this.state;
+        const { comentarios, telaAdicaoVisivel, podeComentar } = this.state;
 
-        if (comentarios) {
-            return(
-                <>
-                    {this.mostrarComentarios()}
-                    {telaAdicaoVisivel && this.mostrarTelaAdicaoComentario()}
-                </>
-            );
+        if (podeComentar) {
+            if (comentarios.length) {
+                return (
+                    <>
+                        {this.mostrarComentarios()}
+                        {telaAdicaoVisivel && this.mostrarTelaAdicaoComentario()}
+                    </>
+                );
+            } else {
+                return this.mostrarMensagemCarregando();
+            }
         } else {
-            return null;
+            return this.mostrarBotaoAtualizar();
         }
     }
 
 
 
 }
- 
+
