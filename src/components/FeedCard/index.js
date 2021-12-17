@@ -22,7 +22,7 @@ export default class FeedCard extends React.Component {
                     navegador.navigate("Detalhes", { feedId: feed._id })
                 }
             }>
-                <Card>
+                <Card >
                     <CardImage source={getImagem(feed.familia.blobs[0].file)} />
                     <CardContent>
                         <NomeFamilia><Titulo>Familia: </Titulo>{feed.familia.name}</NomeFamilia>

@@ -203,7 +203,7 @@ export default class Detalhes extends React.Component {
                         {this.mostrarSlide()}
                         <CaixaDetalhes>
                             <NomeFamilia><Titulo>Familia: </Titulo>{feed.familia.name}</NomeFamilia>
-                            <NomeFamilia><Titulo>Descendência: </Titulo>{feed.assinatura}</NomeFamilia>
+                            <NomeFamilia><Titulo>Descendência: </Titulo>{feed.descendencia.assinatura}</NomeFamilia>
                             <DescricaoFamilia>{feed.familia.description}</DescricaoFamilia>
                             <Espacador />
                         </CaixaDetalhes>

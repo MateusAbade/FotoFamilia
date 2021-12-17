@@ -392,16 +392,13 @@ export default class Comentarios extends React.Component {
         const { comentarios, telaAdicaoVisivel, podeComentar } = this.state;
 
         if (podeComentar) {
-            if (comentarios.length) {
+
                 return (
                     <>
                         {this.mostrarComentarios()}
                         {telaAdicaoVisivel && this.mostrarTelaAdicaoComentario()}
                     </>
                 );
-            } else {
-                return this.mostrarMensagemCarregando();
-            }
         } else {
             return this.mostrarBotaoAtualizar();
         }

@@ -43,7 +43,7 @@ def get_comentarios(feed_id, pagina):
     conexao = get_conexao_bd()
     cursor = conexao.cursor(dictionary= True)
     cursor.execute(
-        "SELECT id, feed , comentario, nome, conta, DATE_FORMAT(data, '%Y-%m-%d T') as data FROM"+
+        "SELECT id, feed , comentario, nome, conta, DATE_FORMAT(data, '%Y-%m-%d %T') as data FROM"+
         " comentarios WHERE feed = "+ str(feed_id)+" ORDER BY data desc limit "+ str((pagina - 1)* TAMANHO_PAGINA)+ ", "+ str(TAMANHO_PAGINA)
     )
     resultado=cursor.fetchall()
